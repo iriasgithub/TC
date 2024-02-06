@@ -9,3 +9,4 @@ Prácticas Teoría de la Computación Q6 GEI
     a) git add .
     b) git commit -m "Mensaje descriptivo del commit"
     c) git push origin <nombre-rama>
+5) Para ejecutar seleccionar las líneas de código y presionar shift + enter.
