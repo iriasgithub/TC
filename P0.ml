@@ -18,3 +18,21 @@ let y = function x -> 5 in mapdoble y;;
 (*- : ('_weak1 -> int) -> '_weak1 list -> int list = <fun>
 Estamos indicando que el primer argumento que recibe mapdoble es la función x -> 5
 por lo que el tipo de "mapdoble y" es una función parcialmente aplicada. De ahí los weak*)
+
+
+(*Implementación de la función primero_que_cumple*)
+let rec primero_que_cumple f l = match l with 
+  [] -> raise(Not_found "No hay elementos que cumplan el predicado")
+  | h1::t -> if f h1 then h1 
+             else primero_que_cumple f t;;
+
+(*Tipo de la función primero_que_cumple*)
+(*val primero_que_cumple : ('a -> bool) -> 'a list -> 'a = <fun>*)
+
+let existe f l = try primero_que_cumple f l with
+                  Not_found -> false
+                  | _ -> true;;
+
+primero_que_cumple (function x -> if x>0 then true else false) [0; -1; -2];;
+
+existe (function x -> if x>0 then true else false) [0; -1; -2];;
