@@ -11,7 +11,7 @@ let rec mapdoble f1 f2 l = match l with
 mapdoble (function x -> x*2) (function x -> "x") [1;2;3;4;5];;
 Error: This expression has type string but an expression was expected of type int
 mapdoble espera que ambas funciones devuelvan el mismo tipo de dato, que ha de ser el tipo 
-de dato de toda la lista*)
+de dato de toda la lista. En Ocaml las listas solo pueden contener un tipo*)
 
 (*Tipo de *)
 let y = function x -> 5 in mapdoble y;;
@@ -22,17 +22,27 @@ por lo que el tipo de "mapdoble y" es una funci처n parcialmente aplicada. De ah�
 
 (*Implementaci처n de la funci처n primero_que_cumple*)
 let rec primero_que_cumple f l = match l with 
-  [] -> raise(Not_found "No hay elementos que cumplan el predicado")
+  [] -> raise(Not_found)
   | h1::t -> if f h1 then h1 
              else primero_que_cumple f t;;
 
 (*Tipo de la funci처n primero_que_cumple*)
 (*val primero_que_cumple : ('a -> bool) -> 'a list -> 'a = <fun>*)
 
-let existe f l = try primero_que_cumple f l with
-                  Not_found -> false
-                  | _ -> true;;
+(*Implementaci처n de la funci처n existe*)
+let existe f l =
+  try
+    let _ = primero_que_cumple f l in true
+  with
+  | Not_found -> false;;
 
-primero_que_cumple (function x -> if x>0 then true else false) [0; -1; -2];;
+primero_que_cumple (function x -> if x>0 then true else false) [0; 0; -2];;
 
-existe (function x -> if x>0 then true else false) [0; -1; -2];;
+existe (function x -> if x>0 then true else false) [0; 1; -2];;
+
+(*Implementaci처n de la funci처n asociado*)
+
+let asociado l k = 
+  snd (primero_que_cumple (function (a,b) -> a == k) l);;
+
+let l = [(1,"a"); (2,"b"); (3, "c")] in asociado l 2;;
