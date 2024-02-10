@@ -104,3 +104,87 @@ pre_orden arbol;;
 post_orden arbol;;
 anchura arbol;;
 
+(*EJERCICIO 4*)
+
+type 'a conjunto = Conjunto of 'a list;;
+
+let conjunto_vacio = Conjunto [];;
+
+let rec pertenece a c = match c with
+  Conjunto ([]) -> false
+  | Conjunto (h::t) -> if h == a then true else pertenece a (Conjunto(t))
+;;
+
+let pertenece a = function (*recordar que el segundo parámetro es Conjunto l*)
+    Conjunto l -> List.mem a l
+;;
+
+let c = Conjunto([1;2;3;4;5]);;
+pertenece 3 c;;
+
+let agregar a = function Conjunto l -> if pertenece a (Conjunto l) then Conjunto l
+                                      else Conjunto (a::l)
+;;
+
+agregar 19 c;;
+agregar 1 c;;
+
+let conjunto_of_list l = Conjunto l;;
+
+let suprimir a = function Conjunto l -> Conjunto (List.filter (fun x -> x <> a) l);;
+
+suprimir 1 c;;
+
+let cardinal = function Conjunto l -> List.length l;;
+
+cardinal c;;
+
+let union = function Conjunto l1 -> function Conjunto l2 -> 
+  conjunto_of_list (List.sort_uniq compare (l1 @ l2))
+;;
+
+let interseccion = function Conjunto l1 -> function Conjunto l2 ->
+  conjunto_of_list  (List.filter (fun x -> List.mem x l2) l1)
+;;
+
+let c2 = Conjunto([1;2;6;7;8]);;
+union c c2;;
+interseccion c c2;;
+
+let diferencia = function Conjunto l1 -> function Conjunto l2 ->
+  conjunto_of_list  (List.filter (fun x -> not (List.mem x l2)) l1)
+;;
+
+diferencia (union c c2) (interseccion c c2);;
+
+(*Mirar si el conjunto c1 está incluido en el conjunto c2*)
+(*for_all mira si todos los elementos de la lista satisfacen el predicado, [] -> true*)
+let incluido c1 c2 = match c1 with Conjunto l1 ->
+ List.for_all (fun x -> pertenece x c2) l1
+;;
+
+let c3 = Conjunto([1;2]);;
+incluido c c2;;
+incluido c3 c;;
+
+let igual c1 c2 = (incluido c1 c2) && (incluido c2 c1);;
+
+let c4 = Conjunto([1;2]);;
+igual c c2;;
+igual c3 c4;;
+
+let rec lprod l1 l2 = match l1 with
+  [] -> []
+  |h::t -> List.map (fun x -> (h,x)) l2 @ lprod t l2
+;;
+
+let producto_cartesiano = function Conjunto l1 -> function Conjunto l2 ->
+  conjunto_of_list (lprod l1 l2)
+;;
+
+producto_cartesiano c c2;;
+producto_cartesiano c3 c4;;
+
+let list_of_conjunto = function Conjunto l -> l;;
+
+list_of_conjunto c2;;
