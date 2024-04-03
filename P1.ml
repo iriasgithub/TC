@@ -1,3 +1,7 @@
+(*Nos movemos a la carpeta ocaml-talf/src
+   Ejecutamos ocaml
+   y escribimos las siguienes lineas*)
+
 #load "talf.cma";;
 open Conj;;
 open Auto;;
@@ -64,4 +68,43 @@ let rec no_determinista_ni_epsilon l = match l with
 
 let es_afd af = match af with 
   Af(_, _, _, c, _) -> not (no_determinista_ni_epsilon (simplificar (list_of_conjunto c)))
+;;
+
+let fst (x, _) = x;;
+let mid (_, x, _) = x;;
+let snd (_, y) = y;;
+
+let equivalentes a1 a2 = match a1, a2 with 
+| Af(estados1, simbolos1, e_inicial1, arcos1, e_final1), Af(estados2, simbolos2, e_inicial2, arcos2, e_final2) -> 
+  if (not (igual simbolos1 simbolos2)) then false
+  else 
+    let rec aux pares_pendientes pares_explorados = 
+      match pares_pendientes with 
+      | h::t -> if (not (pertenece h pares_explorados)) then 
+                  if ((not (pertenece (fst(h)) e_final1)) && (pertenece (snd(h)) e_final2)) || (pertenece (fst(h)) e_final1) && (not (pertenece (snd(h)) e_final2))
+                  then false 
+                  else aux (pares_pendientes @ (crear_lista_transiciones h simbolos1 arcos1 arcos2)) (agregar h pares_explorados)
+                else aux pares_pendientes pares_explorados
+      | [] -> true
+  in aux [(e_inicial1, e_inicial2)] conjunto_vacio
+;;
+
+(*Función que indica el estado al que transicionamos desde un estado inicial con un símbolo*)
+let transicionar estado arcos simbolo = 
+  let arcos_list = list_of_conjunto arcos in 
+  mid (List.find (fun (x, _, y) -> x == estado && y == simbolo) arcos_list) 
+;;
+
+let transicionar estado arcos simbolo = 
+  let arcos_list = list_of_conjunto arcos in 
+  match List.find (fun (Arco_af (x, _, y)) -> x = estado && y = simbolo) arcos_list with
+  | Arco_af (x, _, y) -> (x, y)
+;;
+(*Función que crea una lista de transciones de un par a partir de un conjunto de símbolos *)
+let crear_lista_transiciones par simbolos arcos1 arcos2 = 
+  let rec aux simbolos_left transiciones = 
+    match simbolos_left with 
+    | h::t -> aux t ((transicionar (fst(par)) arcos1 h, transicionar (snd(par)) arcos2 h)::transiciones)
+    | [] -> transiciones
+in aux (list_of_conjunto simbolos) []
 ;;
