@@ -28,8 +28,6 @@ let es_afne af = match af with
   Af (_, _, _, c, _) -> List.exists es_epsilon (list_of_conjunto c) 
 ;;
 
-
-
 (*Implemente una función es_afn : Auto.af -> bool que reciba como argumento un autómata
 finito, y que devuelva true si se trata de un autómata que presenta algún tipo de no determinismo
 (excepto épsilon-transiciones), o false en caso contrario.*)
@@ -40,13 +38,6 @@ finito, y que devuelva true si se trata de un autómata que presenta algún tipo
 (*La función simplificar convierte una lista de tripletes en una lista de tuplas en las que solo se tome el estado 1 y el símbolo de entrada*)
 let simplificar l = List.map (function Arco_af(e1, e2, t) -> (e1, t)) l ;;
 
-(*Devuelve true si existe alguna tupla repetida, false en caso contrario*)
-(*let rec no_determinista l = match l with 
-  | [] -> false
-  | (_, Terminal "")::t -> no_determinista t (* Ignorar si 'a' es igual a Terminal "" *)
-  | h::t -> if (List.mem h t) then true else no_determinista t
-;;*)
-
 let rec no_determinista l = match l with 
   | [] -> false
   | h::t -> if (List.mem h t) then true else no_determinista t
@@ -55,8 +46,6 @@ let rec no_determinista l = match l with
 let es_afn af = match af with 
   Af(_, _, _, c, _) -> no_determinista (simplificar (list_of_conjunto c))
 ;;
-
-
 
 (*Implemente una función es_afd : Auto.af -> bool que reciba como argumento un autómata
 finito, y que devuelva true si se trata de un autómata totalmente determinista, o false en caso contrario.*)
@@ -83,13 +72,13 @@ let equivalentes a1 a2 =
   | Af(estados1, simbolos, e_inicial1, arcos1, e_final1), Af(estados2, _, e_inicial2, arcos2, e_final2) ->
     let rec aux estados_pendientes estados_explorados =
       match estados_pendientes with
-      | [] -> true  (* Todos los estados explorados y compatibles *)
+      | [] -> true  (*Todos los estados explorados y compatibles*)
       | (l1, l2) :: t ->
-        (* Verificar si los estados actuales son compatibles *)
+        (*Verificar si los estados actuales son compatibles*)
         if not (estados_compatibles (l1, l2) (e_final1, e_final2)) then
-          false (* Si no son compatibles, los autómatas no son equivalentes *)
+          false (*Si no son compatibles los autómatas no son equivalentes*)
         else if List.mem (l1, l2) estados_explorados then
-          aux t estados_explorados (* Evitar bucles *)
+          aux t estados_explorados
         else
           let nuevos_estados =
             List.fold_left
@@ -145,14 +134,13 @@ let transicionar estado arcos simbolo =
   in aux (list_of_conjunto arcos) []
 ;;
 
-let escaner_afn list_simbolos af = match af with 
-| Af(estados, simbolos, e_inicial, arcos, e_final) -> 
-  let rec aux simbolos_pendientes estados_pendientes = 
-    match simbolos_pendientes with 
-    | h::t -> aux t (transicionar_lista estados_pendientes arcos h) 
-    | [] -> if comprobar_finales estados_pendientes e_final then true 
-            else false 
-  in aux list_simbolos [e_inicial]
+let transicionar_lista estados arcos simbolo =
+  let rec aux estados_transicionados = function
+    | [] -> estados_transicionados
+    | estado::resto_estados ->
+      let estados_transicionados_estado = transicionar estado arcos simbolo in
+      aux (estados_transicionados @ estados_transicionados_estado) resto_estados
+  in aux [] estados
 ;;
 
 let rec comprobar_finales list_estados estados_finales= 
@@ -162,13 +150,14 @@ let rec comprobar_finales list_estados estados_finales=
   | [] -> false 
 ;;
 
-let transicionar_lista estados arcos simbolo =
-  let rec aux estados_transicionados = function
-    | [] -> estados_transicionados
-    | estado::resto_estados ->
-      let estados_transicionados_estado = transicionar estado arcos simbolo in
-      aux (estados_transicionados @ estados_transicionados_estado) resto_estados
-  in aux [] estados
+let escaner_afn list_simbolos af = match af with 
+| Af(estados, simbolos, e_inicial, arcos, e_final) -> 
+  let rec aux simbolos_pendientes estados_pendientes = 
+    match simbolos_pendientes with 
+    | h::t -> aux t (transicionar_lista estados_pendientes arcos h) 
+    | [] -> if comprobar_finales estados_pendientes e_final then true 
+            else false 
+  in aux list_simbolos [e_inicial]
 ;;
 
 let l1_si = [Terminal "a"];;
@@ -205,5 +194,3 @@ let l4_no = [Terminal "c"];;
 let l5_no = [Terminal "c"; Terminal "b"];;
 
 escaner_afnd l1_si afd1;;
-
-
