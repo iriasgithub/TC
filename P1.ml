@@ -74,26 +74,66 @@ let es_afd af = match af with
 (*Ejercicio 2*)
 
 let afd1 = af_of_string "0 1 2 3; a b c; 0; 1 3; 0 1 a; 1 1 b; 2 3 a; 2 3 c;";; 
-let afd11 = af_of_string "0 1 2 3; a b c; 0; 1 3; 0 1 a; 1 1 b; 2 3 a; 2 3 c;";; 
+let afd11 = af_of_string "0 1 2 3; a b c; 0; 0 2; 0 1 a; 1 1 b; 2 3 a; 2 3 c;";; 
+let afne1 = af_of_string "0 1 2 3; a b c; 0; 1 3; 0 1 a; 1 1 b; 1 2 a; 2 0 epsilon; 2 3 epsilon; 2 3 c;";;
+let afne2 = af_of_string "0 1 2 3; a b c; 0; 1 3; 0 1 a; 1 1 b; 1 2 a; 2 0 epsilon; 2 3 epsilon; 2 3 c;";;
 
-let fst (x, _) = x;;
-let mid (_, x, _) = x;;
-let snd (_, y) = y;;
-
-let equivalentes a1 a2 = match a1, a2 with 
-| Af(estados1, simbolos1, e_inicial1, arcos1, e_final1), Af(estados2, simbolos2, e_inicial2, arcos2, e_final2) -> 
-  if (not (igual simbolos1 simbolos2)) then false
-  else 
-    let rec aux pares_pendientes pares_explorados = 
-      match pares_pendientes with 
-      | h::t -> if (not (pertenece h pares_explorados)) then 
-                  if ((not (pertenece (fst(h)) e_final1)) && (pertenece (snd(h)) e_final2)) || (pertenece (fst(h)) e_final1) && (not (pertenece (snd(h)) e_final2))
-                  then false 
-                  else aux (pares_pendientes @ (crear_lista_transiciones h simbolos1 arcos1 arcos2)) (agregar h pares_explorados)
-                else aux pares_pendientes pares_explorados
-      | [] -> true
-  in aux [(e_inicial1, e_inicial2)] conjunto_vacio
+let equivalentes a1 a2 =
+  match a1, a2 with
+  | Af(estados1, simbolos, e_inicial1, arcos1, e_final1), Af(estados2, _, e_inicial2, arcos2, e_final2) ->
+    let rec aux estados_pendientes estados_explorados =
+      match estados_pendientes with
+      | [] -> true  (* Todos los estados explorados y compatibles *)
+      | (l1, l2) :: t ->
+        (* Verificar si los estados actuales son compatibles *)
+        if not (estados_compatibles (l1, l2) (e_final1, e_final2)) then
+          false (* Si no son compatibles, los autómatas no son equivalentes *)
+        else if List.mem (l1, l2) estados_explorados then
+          aux t estados_explorados (* Evitar bucles *)
+        else
+          let nuevos_estados =
+            List.fold_left
+              (fun destinos_generados simbolo ->
+                let (d1, d2) = (transicionar_con_estados l1 arcos1 simbolo, transicionar_con_estados l2 arcos2 simbolo) in
+                  (d1, d2) :: destinos_generados)
+              [] (list_of_conjunto simbolos)
+          in
+          aux (nuevos_estados @ t) ((l1, l2) :: estados_explorados)
+    in
+    aux [([e_inicial1], [e_inicial2])] []
 ;;
+
+let rec transicionar_con_e estado arcos simbolo = 
+  let rec aux arcos_pendientes estados = 
+    match arcos_pendientes with 
+    | Arco_af (origen, destino, literal)::t -> if (origen = estado) && (literal = simbolo) then aux t (destino::estados)
+                                              else if (origen = estado) && (literal = Terminal "") then (transicionar_con_e destino arcos simbolo) @ aux t estados
+                                              else aux t estados
+  | [] -> estados
+  in aux (list_of_conjunto arcos) []
+;;
+
+let transicionar_con_estados estados arcos simbolo = 
+  let rec aux estados_pendientes destinos = 
+  match estados_pendientes with 
+  | h::t -> aux t ((transicionar_con_e h arcos simbolo) @ destinos)
+  | [] -> destinos
+  in aux estados []
+;;
+
+let rec algun_final list_estados conj_finales = 
+  match list_estados with 
+  | h::t -> if pertenece h conj_finales then true else algun_final t conj_finales
+  | [] -> false 
+;;
+
+let estados_compatibles (list_estados1, list_estados2) (ef1, ef2) = 
+  if ((algun_final list_estados1 ef1) && (algun_final list_estados2 ef2)) ||
+    (not (algun_final list_estados1 ef1) && not (algun_final list_estados2 ef2)) then true 
+else false 
+;;
+
+(*Ejercicio 3 a)*)
 
 (*Función que indica el estado o lista de estados al que transicionamos desde un estado inicial con un símbolo, o lista vacía si no hay ninguno*)
 let transicionar estado arcos simbolo = 
@@ -104,20 +144,6 @@ let transicionar estado arcos simbolo =
     | [] -> estados
   in aux (list_of_conjunto arcos) []
 ;;
-
-(*Función que crea una lista de transciones de un par a partir de un conjunto de símbolos *)
-let crear_lista_transiciones par simbolos arcos1 arcos2 = 
-  let rec aux simbolos_left transiciones = 
-    match simbolos_left with 
-    | h::t -> let estado1, estado2 = transicionar (fst(par)) arcos1 h, transicionar (snd(par)) arcos2 h in 
-              if estado1 = Estado "NULL" && estado2 = Estado "NULL" then aux t (transiciones) else aux t ((estado1, estado2)::transiciones)
-    | [] -> transiciones
-in aux (list_of_conjunto simbolos) []
-;;
-
-equivalentes afd1 afd11;;
-
-(*Ejercicio 3 a)*)
 
 let escaner_afn list_simbolos af = match af with 
 | Af(estados, simbolos, e_inicial, arcos, e_final) -> 
